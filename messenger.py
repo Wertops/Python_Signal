@@ -1,9 +1,18 @@
 import os
 import pickle
 import string
+import hashlib
+import random
+import re
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.ed25519 import \
+        Ed25519PublicKey, Ed25519PrivateKey
+
 
 class MessengerServer:
     def __init__(self, server_signing_key, server_decryption_key):
@@ -27,9 +36,6 @@ class MessengerClient:
         self.conns = {}
         self.certs = {}
 
-        #My added parameters:
-        self.p = 999331
-        self.g = 13
 
         #My functions
         def generateDH(self):
@@ -43,7 +49,7 @@ class MessengerClient:
 
     def generateCertificate(self):
 
-        DH_keys = generateDH(self);
+        DH_keys = GENERATE_DH(self)
         certificate = {'name': self.name, 'public_key': DH_keys['public_key']}
 
         raise Exception("not implemented!")
@@ -63,6 +69,32 @@ class MessengerClient:
 
     def report(self, name, message):
         raise Exception("not implemented!")
+        return
+
+    def GENERATE_DH():
+        
+        return
+
+    def DH(dh_pair, dh_pub):
+        return
+
+    def KDF_RK(rk, dh_out):
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(), length=32, salt=rk, backend=default_backend()
+        )
+        key = kdf.derive(dh_out)
+        return key
+
+    def KDF_CK(ck):
+        return
+    
+    def ENCRYPT(mk, plaintext, assoc_data):
+        return
+
+    def DECRYPT(mk, ciphertext, assoc_data):
+        return
+
+    def HEADER(dh_pair, pn, n):
         return
 
 
