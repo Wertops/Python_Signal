@@ -63,7 +63,6 @@ class MessengerClient:
         return
 
     def sendMessage(self, name, message):
-        if name is not 
         raise Exception("not implemented!")
         return
 
@@ -80,6 +79,7 @@ class MessengerClient:
         return priv_key, priv_key.public_key()
 
     def DH(dh_pair, dh_pub):
+
         return
 
     def KDF_RK(rk, dh_out):
