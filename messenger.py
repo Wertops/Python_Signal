@@ -38,19 +38,9 @@ class MessengerClient:
         self.conns = {}
         self.certs = {}
 
-
-        #My functions
-        def generateDH(self):
-            priv_key = ec.generate_private_key(
-                ec.SECP256R1
-            )
-            pub_key = priv_key.public_key()
-            key_to_share = priv_key.exchange(ec.ECDH(), pub_key)
-            #might actually want my public key to be key_to_share
-            return {'private_key': priv_key, 'public_key': pub_key}
-
+      
     def generateCertificate(self):
-        sk, pk = GENERATE_DH()
+        sk, pk = gene
         self.sk = sk
         self.pk = pk
         certificate = {'name': self.name, 'public_key': DH_keys['public_key']}
@@ -63,10 +53,12 @@ class MessengerClient:
         return
 
     def sendMessage(self, name, message):
+
         raise Exception("not implemented!")
         return
 
     def receiveMessage(self, name, header, ciphertext):
+
         raise Exception("not implemented!")
         return
 
@@ -79,7 +71,7 @@ class MessengerClient:
         return priv_key, priv_key.public_key()
 
     def DH(dh_pair, dh_pub):
-
+        
         return
 
     def KDF_RK(rk, dh_out):
