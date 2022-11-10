@@ -17,6 +17,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from cryptography.hazmat.primitives import serialization
 
+#change this to the GENERATE_DH in the Messenger_Client object
 def GENERATE_DH():
         priv_key = ec.generate_private_key(ec.SECP256R1)
         return priv_key, priv_key.public_key()
