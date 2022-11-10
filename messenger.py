@@ -14,6 +14,8 @@ from cryptography.hazmat.primitives.asymmetric.x25519 import X25519PrivateKey
 from cryptography.hazmat.primitives.asymmetric.ed25519 import \
         Ed25519PublicKey, Ed25519PrivateKey
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
+from cryptography.hazmat.primitives import serialization
 
 def GENERATE_DH():
         priv_key = ec.generate_private_key(ec.SECP256R1)
@@ -61,8 +63,16 @@ def HEADER(dh_pair, pn, n):
             return
 
         def signCert(self, cert):
-            raise Exception("not implemented!")
-            return
+            cert['public_key'] = cert['public_key'].public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
+            serialized_cert = pickle.dumps(cert)
+            signature = self.server_signing_key.sign(
+                serialized_cert,
+                ec.ECDSA(hashes.SHA256())
+            )
+            return signature
 
 class MessengerClient:
 
@@ -72,20 +82,54 @@ class MessengerClient:
         self.server_encryption_pk = server_encryption_pk
         self.conns = {}
         self.certs = {}
-
+    
+    #My functions
+    def generateDH(self):
+        priv_key = ec.generate_private_key(
+            ec.SECP256R1()
+        )
+        pub_key = priv_key.public_key()
+        key_to_share = priv_key.exchange(ec.ECDH(), pub_key)
+        #might actually want my public key to be key_to_share
+        return {'private_key': priv_key, 'public_key': pub_key}
+    #End my functions
       
     def generateCertificate(self):
-        sk, pk = GENERATE_DH()
-        self.sk = sk
-        self.pk = pk
+        #Gigi's code is commented
+        #sk, pk = GENERATE_DH()
+        #self.sk = sk
+        #self.pk = pk
+        #certificate = {'name': self.name, 'public_key': DH_keys['public_key']}
+        #raise Exception("not implemented!")
+        #return
+        
+        #begin Ella's code
+        DH_keys = self.generateDH()
         certificate = {'name': self.name, 'public_key': DH_keys['public_key']}
-
-        raise Exception("not implemented!")
-        return
+        self.conns[self.name] = {'private_key': DH_keys['private_key'], 'public_key': DH_keys['public_key']}
+        #raise Exception("not implemented!")
+        return certificate
 
     def receiveCertificate(self, certificate, signature):
-        raise Exception("not implemented!")
-        return
+        #verify sig
+        certificate['public_key'] = certificate['public_key'].public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        serialized_cert = pickle.dumps(certificate)
+        #serialized_cert = pickle.dumps(certificate)
+
+        #check this verify function
+        try:
+            self.server_signing_key.public_key().verify(signature, serialized_cert, ec.ECDSA(hashes.SHA256()))
+        except:
+            raise Exception("the signature on the certificate for this user isn't valid")
+            return
+        else:
+            #certificate['public_key'].verify(signature, serialized_cert, ec.ECDSA(hashes.SHA256()))
+            #store the cert
+            self.certs[certificate['name']] = certificate
+            return
 
     def sendMessage(self, name, message):
 
