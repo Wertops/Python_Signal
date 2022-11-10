@@ -63,6 +63,7 @@ class MessengerClient:
         return
 
     def sendMessage(self, name, message):
+        if name is not 
         raise Exception("not implemented!")
         return
 
@@ -75,14 +76,10 @@ class MessengerClient:
         return
 
     def GENERATE_DH():
-        parameters = dh.generate_parameters(generator= 2, key_size= 2048)
-        server_pk = parameters.generate_private_key()
-        person_pk = parameters.generate_private_key()
-        shared_key = server_pk.exchange(person_pk.public_key)
-        return server_pk, shared_key
+        priv_key = ec.generate_private_key(ec.SECP256R1)
+        return priv_key, priv_key.public_key()
 
     def DH(dh_pair, dh_pub):
-        
         return
 
     def KDF_RK(rk, dh_out):
