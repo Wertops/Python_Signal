@@ -15,19 +15,54 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import \
         Ed25519PublicKey, Ed25519PrivateKey
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
+def GENERATE_DH():
+        priv_key = ec.generate_private_key(ec.SECP256R1)
+        return priv_key, priv_key.public_key()
 
-class MessengerServer:
-    def __init__(self, server_signing_key, server_decryption_key):
-        self.server_signing_key = server_signing_key
-        self.server_decryption_key = server_decryption_key
+def DH(dh_pair, dh_pub):
+        return dh_pair['sk'].exchange(ec.ECDH(), dh_pub)
 
-    def decryptReport(self, ct):
-        raise Exception("not implemented!")
-        return
+def KDF_RK(rk, dh_out):
+        kdf = PBKDF2HMAC(
+            algorithm=hashes.SHA256(), length=32, salt=rk, backend=default_backend()
+        )
+        key = kdf.derive(dh_out)
+        return key[0:32], key[32:64]
 
-    def signCert(self, cert):
-        raise Exception("not implemented!")
-        return
+def KDF_CK(ck):
+        hmac1 = hmac(ck, hashes.SHA256)
+        hmac2 = hmac(ck, hashes.SHA256)
+        # bytes1 = {'1', 'ascii'}
+        # bytes2 = {'2', 'ascii'}
+        return h
+    
+def ENCRYPT(mk, plaintext, assoc_data):
+        aesgcm = AESGCM(mk)
+        nonce = os.urandom(12)
+        ct = aesgcm.encrypt(nonce= nonce, data= plaintext, associated_data= assoc_data)
+        return ct
+
+def DECRYPT(mk, ciphertext, assoc_data):
+        aesgcm = AESGCM(mk)
+        nonce = os.urandom(12)
+        pt = aesgcm.decrypt(nonce= nonce, data= ciphertext, associated_data= assoc_data)
+        return pt
+
+def HEADER(dh_pair, pn, n):
+        # return {'dh' = dh_pair, 'pn' = pn, 'n' = n}
+
+    class MessengerServer:
+        def __init__(self, server_signing_key, server_decryption_key):
+            self.server_signing_key = server_signing_key
+            self.server_decryption_key = server_decryption_key
+
+        def decryptReport(self, ct):
+            raise Exception("not implemented!")
+            return
+
+        def signCert(self, cert):
+            raise Exception("not implemented!")
+            return
 
 class MessengerClient:
 
@@ -40,7 +75,7 @@ class MessengerClient:
 
       
     def generateCertificate(self):
-        sk, pk = gene
+        sk, pk = GENERATE_DH()
         self.sk = sk
         self.pk = pk
         certificate = {'name': self.name, 'public_key': DH_keys['public_key']}
@@ -66,39 +101,6 @@ class MessengerClient:
         raise Exception("not implemented!")
         return
 
-    def GENERATE_DH():
-        priv_key = ec.generate_private_key(ec.SECP256R1)
-        return priv_key, priv_key.public_key()
-
-    def DH(dh_pair, dh_pub):
-        
-        return
-
-    def KDF_RK(rk, dh_out):
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(), length=32, salt=rk, backend=default_backend()
-        )
-        key = kdf.derive(dh_out)
-        return key
-
-    def KDF_CK(ck):
-        h = hmac(ck, hashes.SHA256)
-        return h
-    
-    def ENCRYPT(mk, plaintext, assoc_data):
-        aesgcm = AESGCM(mk)
-        nonce = os.urandom(12)
-        ct = aesgcm.encrypt(nonce= nonce, data= plaintext, associated_data= assoc_data)
-        return ct
-
-    def DECRYPT(mk, ciphertext, assoc_data):
-        aesgcm = AESGCM(mk)
-        nonce = os.urandom(12)
-        pt = aesgcm.decrypt(nonce= nonce, data= ciphertext, associated_data= assoc_data)
-        return pt
-
-    def HEADER(dh_pair, pn, n):
-        return
 
 
 
