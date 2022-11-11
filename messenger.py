@@ -60,8 +60,14 @@ def HEADER(dh_pair, pn, n):
             self.server_decryption_key = server_decryption_key
 
         def decryptReport(self, ct):
-            raise Exception("not implemented!")
-            return
+            #message_array = []
+            plain_text = ""
+            cipher_text = ct['cipher_text']
+            for i in range(0, len(cipher_text)):
+                plain_text = plain_text + chr(int(cipher_text[i]/self.server_decryption_key))
+                #message_array.append(chr(int(cipher_text[i]/self.server_decryption_key)))
+            #raise Exception("not implemented!")
+            return {'name': ct['name'], 'plain_text': plain_text}
 
         def signCert(self, cert):
             cert['public_key'] = cert['public_key'].public_bytes(
@@ -143,8 +149,14 @@ class MessengerClient:
         return
 
     def report(self, name, message):
-        raise Exception("not implemented!")
-        return
+        keys = self.generateDH()
+        message_array = []
+        for i in range(0, len(message)):
+            message_array.append(message[i])
+        for i in range(0, len(message)):
+            message_array[i] = self.server_decryption_key * ord(message_array[i])
+        #raise Exception("not implemented!")
+        return {'name': name, 'cipher_text': message_array}
 
 
 
