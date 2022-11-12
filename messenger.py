@@ -79,15 +79,26 @@ def HEADER(dh_pair, pn, n):
             self.server_signing_key = server_signing_key
             self.server_decryption_key = server_decryption_key
 
-        def decryptReport(self, ct):
-            #message_array = []
-            plain_text = ""
-            cipher_text = ct['cipher_text']
-            for i in range(0, len(cipher_text)):
-                plain_text = plain_text + chr(int(cipher_text[i]/self.server_decryption_key))
-                #message_array.append(chr(int(cipher_text[i]/self.server_decryption_key)))
-            #raise Exception("not implemented!")
-            return {'name': ct['name'], 'plain_text': plain_text}
+       def decryptReport(self, ct):
+        cipher_text = ct['cipher_text']
+        private_key, public_key = GENERATE_DH()
+        keys = {'sk': private_key, 'pk': public_key}
+        v = DH(keys, self.server_decryption_key)
+        v = ct['public_key'] ** self.server_decryption_key
+        v = v.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        serialized_dec_key = self.server_decryption_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        concat_keys = v + serialized_dec_key
+        digest = hashes.Hash(hashes.SHA256()) 
+        digest.update(concat_keys)
+        key = digest.finalize()
+        plain_text = DECRYPT(key, ct, None)
+        return {'name': ct['name'], 'plain_text': plain_text}
 
         def signCert(self, cert):
             cert['public_key'] = cert['public_key'].public_bytes(
@@ -138,19 +149,10 @@ class MessengerClient:
     #End my functions
       
     def generateCertificate(self):
-        #Gigi's code is commented
-        #sk, pk = GENERATE_DH()
-        #self.sk = sk
-        #self.pk = pk
-        #certificate = {'name': self.name, 'public_key': DH_keys['public_key']}
-        #raise Exception("not implemented!")
-        #return
-        
-        #begin Ella's code
-        DH_keys = self.generateDH()
-        certificate = {'name': self.name, 'public_key': DH_keys['public_key']}
-        self.conns[self.name] = {'private_key': DH_keys['private_key'], 'public_key': DH_keys['public_key']}
-        #raise Exception("not implemented!")
+        def generateCertificate(self):
+        private_key, public_key = GENERATE_DH()
+        certificate = {'name': self.name, 'public_key': public_key}
+        self.conns[self.name] = {'private_key': private_key, 'public_key': public_key}
         return certificate
 
     def receiveCertificate(self, certificate, signature):
@@ -160,19 +162,8 @@ class MessengerClient:
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
         serialized_cert = pickle.dumps(certificate)
-        #serialized_cert = pickle.dumps(certificate)
-
-        #check this verify function
-        try:
-            self.server_signing_key.public_key().verify(signature, serialized_cert, ec.ECDSA(hashes.SHA256()))
-        except:
-            raise Exception("the signature on the certificate for this user isn't valid")
-            return
-        else:
-            #certificate['public_key'].verify(signature, serialized_cert, ec.ECDSA(hashes.SHA256()))
-            #store the cert
-            self.certs[certificate['name']] = certificate
-            return
+        self.server_signing_pk.verify(signature, serialized_cert, ec.ECDSA(hashes.SHA256()))
+        self.certs[certificate['name']] = certificate
 
     def sendMessage(self, name, message):
 
@@ -185,14 +176,12 @@ class MessengerClient:
         return
 
     def report(self, name, message):
-        keys = self.generateDH()
-        message_array = []
-        for i in range(0, len(message)):
-            message_array.append(message[i])
-        for i in range(0, len(message)):
-            message_array[i] = self.server_decryption_key * ord(message_array[i])
-        #raise Exception("not implemented!")
-        return {'name': name, 'cipher_text': message_array}
+        private_key, public_key = GENERATE_DH()
+        keys = {'sk': private_key, 'pk': public_key}
+        enc_key = DH(keys, self.server_encryption_pk)
+        message_bytes = bytes(message, 'ascii') * enc_key
+        cipher_text = ENCRYPT(enc_key, message, None)
+        return {'name': name, 'cipher_text': cipher_text}
 
 
 
