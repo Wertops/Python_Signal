@@ -32,7 +32,7 @@ def KDF_RK(rk, dh_out):
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
         input = serialized_root_key + dh_out
-        h = hmac.HMAC(serialized_root_key, hashes.SHA256())
+        h = hmac.HMAC(rk, hashes.SHA256())
         key = h.update(input)
         length = len(key/2)
         kdf_key = key[0:length]
@@ -46,11 +46,18 @@ def KDF_RK(rk, dh_out):
         #return key[0:32], key[32:64]
 
 def KDF_CK(ck):
-        hmac1 = hmac(ck, hashes.SHA256)
-        hmac2 = hmac(ck, hashes.SHA256)
-        # bytes1 = {'1', 'ascii'}
-        # bytes2 = {'2', 'ascii'}
-        return h
+        def KDF_CK(ck):
+        serialized_chain_key = ck.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        h = hmac.HMAC(ck, hashes.SHA256())
+        key = h.update(serialized_chain_key)
+        length = len(key/2)
+        kdf_key = key[0:length]
+        start_len = length + 1
+        output_key = key[start_len : len(key)]
+        return({'chain_key': kdf_key, 'output_key': output_key})
     
 def ENCRYPT(mk, plaintext, assoc_data):
         aesgcm = AESGCM(mk)
