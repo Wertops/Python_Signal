@@ -26,11 +26,24 @@ def DH(dh_pair, dh_pub):
         return dh_pair['sk'].exchange(ec.ECDH(), dh_pub)
 
 def KDF_RK(rk, dh_out):
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(), length=32, salt=rk, backend=default_backend()
+        def KDF_RK(rk, dh_out):
+        serialized_root_key = rk.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
-        key = kdf.derive(dh_out)
-        return key[0:32], key[32:64]
+        input = serialized_root_key + dh_out
+        h = hmac.HMAC(serialized_root_key, hashes.SHA256())
+        key = h.update(input)
+        length = len(key/2)
+        kdf_key = key[0:length]
+        start_len = length + 1
+        output_key = key[start_len : len(key)]
+        return({'root_key': kdf_key, 'output_key': output_key})
+        #kdf = PBKDF2HMAC(
+        #    algorithm=hashes.SHA256(), length=32, salt=rk, backend=default_backend()
+        #)
+        #key = kdf.derive(dh_out)
+        #return key[0:32], key[32:64]
 
 def KDF_CK(ck):
         hmac1 = hmac(ck, hashes.SHA256)
@@ -99,6 +112,22 @@ class MessengerClient:
         key_to_share = priv_key.exchange(ec.ECDH(), pub_key)
         #might actually want my public key to be key_to_share
         return {'private_key': priv_key, 'public_key': pub_key}
+
+    def DH(dh_pair, dh_pub):
+        shared_key = dh_pair['secret_key'].exchange(ec.ECDH(), dh_pub)
+        hash = hashes.Hash(hashes.SHA256())
+        serialized_key = shared_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        serialized_public_key = dh_pub.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+        serialized_key += serialized_public_key
+        hash.update(serialized_key)
+        hashed = hash.finalize()
+        return hashed
     #End my functions
       
     def generateCertificate(self):
